@@ -76,6 +76,15 @@ if ($wackVersion -lt $minimumWackVersion) {
 }
 Write-Host "Windows App Certification Kit version: $wackVersion"
 
+if (Test-Path -LiteralPath $ReportPath) {
+    $reportDirectory = [IO.Path]::GetDirectoryName($ReportPath)
+    $reportBaseName = [IO.Path]::GetFileNameWithoutExtension($ReportPath)
+    $reportExtension = [IO.Path]::GetExtension($ReportPath)
+    $reportTimestamp = Get-Date -Format 'yyyyMMdd-HHmmss-fff'
+    $ReportPath = Join-Path $reportDirectory "$reportBaseName-sdk-$wackVersion-$reportTimestamp$reportExtension"
+    Write-Host "Preserving the existing WACK report. New report: $ReportPath"
+}
+
 New-Item -ItemType Directory -Path ([IO.Path]::GetDirectoryName($ReportPath)) -Force | Out-Null
 
 Write-Host 'Resetting Windows App Certification Kit state...'

@@ -119,6 +119,8 @@ describe('Windows packaging configuration', () => {
     expect(certificationScript).toContain("[version] '10.0.26100.0'")
     expect(certificationScript).toContain("OVERALL_RESULT -ne 'PASS'")
     expect(certificationScript).toContain("//TEST[@OPTIONAL='TRUE' and RESULT='FAIL']")
+    expect(certificationScript).toContain("Get-Date -Format 'yyyyMMdd-HHmmss-fff'")
+    expect(certificationScript).toContain('Preserving the existing WACK report.')
   })
 
   it('uses current Node 24 GitHub Actions runtimes', async () => {
