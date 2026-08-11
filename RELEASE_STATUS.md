@@ -15,6 +15,8 @@ This document records release evidence separately from the reusable procedures i
 - [x] GitHub MFA is enabled for the maintainer account.
 - [x] GitHub Pages is public over HTTPS at
   <https://md-ishtiak-ahmed-sajib.github.io/md-to-docx/>.
+- [x] GitHub Issues, private vulnerability reporting, Dependabot alerts, automated
+  security fixes, secret scanning, and push protection are enabled.
 - [x] The active `refs/tags/v*` repository ruleset prevents release-tag updates
   and deletion without a bypass.
 - [x] `MD to DOCX` is reserved and used as the Partner Center dashboard name.
@@ -37,6 +39,10 @@ This document records release evidence separately from the reusable procedures i
 - [x] Privacy, support, licensing, upstream attribution, third-party notices,
   release procedures, Store copy, certification notes, and four Store screenshots
   are present.
+- [x] Partner Center targets Windows 10/11 Desktop only. Mobile, Xbox, Team, Mixed
+  Reality, and automatic future-device-family selection are disabled.
+- [x] The localhost architecture, privacy boundary, and exact validation sequence
+  are saved under Partner Center Additional Testing Information.
 
 The x64 WACK report contains an optional Electron/Chromium blocked-executable
 diagnostic. The authoritative report result is `PASS`, and there are no required
@@ -46,10 +52,7 @@ test failures. Retain the complete report for Microsoft certification review.
 
 - [ ] Upload the original unsigned x64 and Arm64 AppX files to Partner Center
   Submission 1 and wait for package validation.
-- [ ] Select Windows 10/11 Desktop only and disable automatic future-device-family
-  selection.
 - [ ] Complete the English Store listing and upload the four prepared screenshots.
-- [ ] Add the supplied certification notes and save the draft submission.
 
 Do not upload anything under `release/store/local-test`.
 
