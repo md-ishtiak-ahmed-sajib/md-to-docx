@@ -45,6 +45,9 @@ jobs:
       - name: Type check
         run: corepack pnpm ts-check
 
+      - name: Build library for CLI tests
+        run: corepack pnpm build
+
       - name: Run tests
         run: corepack pnpm exec vitest run --reporter=verbose
 

@@ -23,7 +23,7 @@ jobs:
           registry-url: https://registry.npmjs.org
       - run: corepack pnpm install --frozen-lockfile
       - run: corepack pnpm ts-check
-      - run: corepack pnpm exec vitest run --reporter=verbose
       - run: corepack pnpm build
+      - run: corepack pnpm exec vitest run --reporter=verbose
       - name: Publish only after explicit environment approval
         run: corepack pnpm publish --no-git-checks
