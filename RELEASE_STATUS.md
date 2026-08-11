@@ -26,11 +26,16 @@ This document records release evidence separately from the reusable procedures i
 - [x] The x64 and Arm64 AppX files pass manifest, architecture, resource, and
   package smoke inspection.
 - [x] The unsigned x64 NSIS installer passes its smoke test.
-- [x] The Store workflow passed on commit `17bce389d9ba509439ba8fe2b0b1e7772c88875c`:
-  <https://github.com/md-ishtiak-ahmed-sajib/md-to-docx/actions/runs/31494839159>.
-- [x] The current Windows App Certification Kit completed a full native x64 run:
-  WACK `10.0.28000.2526`, `PARTIAL_RUN=FALSE`, `OVERALL_RESULT=PASS`.
-- [x] The current x64 WACK report is retained locally at
+- [x] The Store workflow passed on security-hardened commit
+  `0bf7c888da3c3a9844003b2b444b81954dd95d60`:
+  <https://github.com/md-ishtiak-ahmed-sajib/md-to-docx/actions/runs/31497993596>.
+- [x] Production and full `pnpm audit` checks report no known vulnerabilities,
+  and GitHub Dependabot reports zero open alerts.
+- [x] The unpatched `image-size` dependency was removed and replaced with bounded
+  PNG, JPEG, GIF, and BMP dimension parsing covered by regression tests.
+- [x] A complete native x64 run proved the WACK procedure on SDK
+  `10.0.28000.2526`: `PARTIAL_RUN=FALSE`, `OVERALL_RESULT=PASS`.
+- [x] That pre-security-rebuild x64 WACK report is retained as historical evidence at
   `release/certification/WACK-1.7.0-x64-sdk-10.0.28000.2526-20260811-191655-199.xml`
   with SHA-256
   `C0D968ABFD615D0DC3AE303322F5CA5AE4342330EA2E717569296C500FD9BC3D`.
@@ -46,15 +51,26 @@ This document records release evidence separately from the reusable procedures i
 
 The x64 WACK report contains an optional Electron/Chromium blocked-executable
 diagnostic. The authoritative report result is `PASS`, and there are no required
-test failures. Retain the complete report for Microsoft certification review.
+test failures. Retain the complete report for Microsoft certification review. The
+security rebuild changed the AppX contents, so the final x64 package still requires
+a fresh WACK run before Partner Center upload.
 
 ## In Progress
 
+- [ ] Locally sign, install, WACK-test, and remove the rebuilt x64 AppX. Retain the
+  new full `PASS` report as the release-candidate certification evidence.
 - [ ] Upload the original unsigned x64 and Arm64 AppX files to Partner Center
   Submission 1 and wait for package validation.
 - [ ] Complete the English Store listing and upload the four prepared screenshots.
 
 Do not upload anything under `release/store/local-test`.
+
+Current unsigned Partner Center inputs:
+
+| Package | SHA-256 |
+| --- | --- |
+| `MD-to-DOCX-1.7.0-x64.appx` | `34601B8893FC5C7D2BDD418A89B0B7F8961D26687E1399348763D4CABF564433` |
+| `MD-to-DOCX-1.7.0-arm64.appx` | `4B1FE597030703D5C9C413737552C6ED02EFCC00A542229B016C89761E85D89D` |
 
 ## External Release Gates
 
