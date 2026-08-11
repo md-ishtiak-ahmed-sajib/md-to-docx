@@ -100,4 +100,48 @@ describe('Windows packaging configuration', () => {
     expect(workflow).toContain("Assert-SignPathSignature -Path $appExecutable.FullName")
     expect(workflow).not.toMatch(/SIGNPATH_API_TOKEN:\s+[^$\s]/)
   })
+
+  it('selects the native package architecture for local installation and WACK', async () => {
+    const [signingScript, certificationScript] = await Promise.all([
+      readFile(path.join(repositoryDir, 'desktop/scripts/test-sign-store.ps1'), 'utf8'),
+      readFile(path.join(repositoryDir, 'desktop/scripts/run-wack.ps1'), 'utf8'),
+    ])
+
+    for (const script of [signingScript, certificationScript]) {
+      expect(script).toContain("[ValidateSet('x64', 'arm64')]")
+      expect(script).toContain('$env:PROCESSOR_ARCHITEW6432')
+      expect(script).toContain("if ($nativeArchitecture -eq 'ARM64') { return 'arm64' }")
+    }
+
+    expect(certificationScript).toContain('$targetArchitecture-local-test.appx')
+    expect(certificationScript).toContain('$targetArchitecture.xml')
+    expect(certificationScript).not.toContain('-x64-local-test.appx"')
+    expect(certificationScript).toContain("[version] '10.0.26100.0'")
+    expect(certificationScript).toContain("OVERALL_RESULT -ne 'PASS'")
+    expect(certificationScript).toContain("//TEST[@OPTIONAL='TRUE' and RESULT='FAIL']")
+  })
+
+  it('uses current Node 24 GitHub Actions runtimes', async () => {
+    const workflowNames = [
+      'windows-store.yml',
+      'windows-installer-release.yml',
+      'publish.yml',
+      'gh-pages.yml',
+    ]
+    const workflows = await Promise.all(
+      workflowNames.map((name) =>
+        readFile(path.join(repositoryDir, '.github/workflows', name), 'utf8'),
+      ),
+    )
+    const workflowSource = workflows.join('\n')
+
+    expect(workflowSource).not.toMatch(/actions\/checkout@v4/)
+    expect(workflowSource).not.toMatch(/actions\/setup-node@v4/)
+    expect(workflowSource).not.toMatch(/actions\/upload-artifact@v4/)
+    expect(workflowSource).not.toMatch(/pnpm\/action-setup@v4/)
+    expect(workflowSource).toContain('actions/checkout@v7')
+    expect(workflowSource).toContain('actions/setup-node@v7')
+    expect(workflowSource).toContain('actions/upload-artifact@v7')
+    expect(workflowSource).toContain('pnpm/action-setup@v6')
+  })
 })

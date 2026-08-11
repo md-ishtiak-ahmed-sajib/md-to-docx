@@ -15,15 +15,15 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 10.6.5
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24.18.0
           cache: pnpm
@@ -65,7 +65,7 @@ jobs:
           Copy-Item THIRD_PARTY_NOTICES.txt release/metadata/THIRD_PARTY_NOTICES.txt
 
       - name: Upload private Partner Center artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: md-to-docx-store-${{ github.ref_name }}
           path: |

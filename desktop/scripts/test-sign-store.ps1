@@ -1,6 +1,8 @@
 [CmdletBinding()]
 param(
     [string[]] $PackagePath,
+    [ValidateSet('x64', 'arm64')]
+    [string] $Architecture,
     [switch] $Install
 )
 
@@ -12,6 +14,24 @@ $desktopPackage = Get-Content (Join-Path $repositoryDirectory 'desktop\package.j
 $sourceDirectory = Join-Path $repositoryDirectory 'release\store'
 $outputDirectory = Join-Path $sourceDirectory 'local-test'
 $thumbprintPath = Join-Path $outputDirectory 'certificate-thumbprint.txt'
+
+function Get-NativePackageArchitecture {
+    if ($Architecture) {
+        return $Architecture
+    }
+
+    # PROCESSOR_ARCHITEW6432 reports the native architecture when this script
+    # runs from an emulated x64 PowerShell process on Windows Arm64.
+    $nativeArchitecture = if ($env:PROCESSOR_ARCHITEW6432) {
+        $env:PROCESSOR_ARCHITEW6432
+    }
+    else {
+        $env:PROCESSOR_ARCHITECTURE
+    }
+
+    if ($nativeArchitecture -eq 'ARM64') { return 'arm64' }
+    return 'x64'
+}
 
 function Test-IsAdministrator {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -36,7 +56,7 @@ function Find-WindowsSdkTool([string] $Name) {
 
 if (-not $PackagePath -or $PackagePath.Count -eq 0) {
     if ($Install) {
-        $localArchitecture = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'x64' }
+        $localArchitecture = Get-NativePackageArchitecture
         $PackagePath = @((Join-Path $sourceDirectory "MD-to-DOCX-$($desktopPackage.version)-$localArchitecture.appx"))
     }
     else {
