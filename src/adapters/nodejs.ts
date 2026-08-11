@@ -1,4 +1,3 @@
-import imagesize, { disableTypes, imageSize } from 'image-size'
 import { Tokens } from 'marked'
 import fs from 'node:fs/promises'
 import http from 'node:http'
@@ -6,6 +5,7 @@ import https from 'node:https'
 
 import { MarkdownImageAdapter } from '../types'
 import { getImageExtension, isHttp } from '../utils'
+import { getImageDimensions } from './image-dimensions'
 
 export const downloadImage: MarkdownImageAdapter = async function (token: Tokens.Image) {
   const src = token.href
@@ -16,17 +16,16 @@ export const downloadImage: MarkdownImageAdapter = async function (token: Tokens
   try {
     const buffer = await loadImage(src)
 
-    const { width, height, type } = imagesize(buffer)
+    const size = getImageDimensions(buffer)
+    if (!size) {
+      return null
+    }
+
+    const { width, height, type } = size
 
     const supportType = getImageExtension(src, type)
 
     if (!supportType) {
-      return null
-    }
-
-    // @ts-ignore
-    if (supportType === 'webp') {
-      console.error(`[MarkdownDocx] Webp is not supported in the nodejs environment`)
       return null
     }
 
@@ -53,7 +52,6 @@ function loadImage (src: string) {
         })
         res.on('end', () => {
           const buffer = Buffer.concat(chunks)
-          disableTypes(['svg', 'webp'])
           resolve(buffer)
         })
         res.on('error', (err) => {
