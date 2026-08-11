@@ -1,5 +1,9 @@
 # MD to DOCX Release Process
 
+See [RELEASE_STATUS.md](./RELEASE_STATUS.md) for the evidence and open gates for
+the current release. This document defines the repeatable process for every
+version.
+
 ## Versioning
 
 The root, web, and desktop package versions must match. Version `1.7.0` maps to Microsoft Store version `1.7.0.0`. Increment the semantic version before each release; never reuse a Store package version.

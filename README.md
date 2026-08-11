@@ -37,6 +37,9 @@ The Windows application bundles Electron, opens in its own sandboxed window, and
 
 The recommended customer channel is Microsoft Store. Store packages support x64 and Arm64 and are signed by Microsoft after certification. No Node.js, IDE, driver, or administrator installer is required.
 
+Current Microsoft Store release evidence and outstanding external gates are listed
+in [RELEASE_STATUS.md](./RELEASE_STATUS.md).
+
 The optional x64 GitHub installer is trusted only when Windows reports a valid, timestamped `SignPath Foundation` Authenticode signature. See [Share and Run](./share_%26_run.md).
 
 ## Repository Development

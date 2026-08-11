@@ -2,6 +2,10 @@
 
 This is the source-of-truth checklist for Partner Center Submission 1.
 
+The evidence and remaining gates for the current 1.7.0 submission are tracked in
+[RELEASE_STATUS.md](./RELEASE_STATUS.md). Keep this guide reusable; update the
+status document when an external release gate changes.
+
 ## Immutable Product Identity
 
 | Field | Exact value |
@@ -36,6 +40,10 @@ corepack pnpm store:remove:test
 ```
 
 `store:sign:test` creates separate copies in `release/store/local-test`, places the public certificate in the current user's Trusted People store for inspection, and removes the temporary private key. Never upload a `local-test` package to Partner Center. Windows requires an elevated terminal to place a test certificate in the local-machine Trusted People store, so run `store:install:test`, `store:certify`, and the final `store:remove:test` from **PowerShell opened with Run as administrator**. The install and certification commands automatically select x64 or Arm64 from the native Windows architecture, including when an x64 PowerShell process is emulated on Windows Arm64. Certification requires WACK from Windows SDK 10.0.26100 or newer and fails unless the report's overall result is `PASS`. This elevation applies only to developer sideload/WACK testing; customers installing through Microsoft Store do not receive an administrator prompt. `store:certify` writes its architecture-labeled report under `release/certification`; when a report already exists, it preserves that evidence and creates a timestamped report for the rerun.
+
+Optional Electron/Chromium diagnostics can appear in a WACK report. Treat the
+report-level `OVERALL_RESULT` as authoritative, retain the complete XML, and do not
+describe a run as certified unless it is complete and reports `PASS`.
 
 ## Pricing and Properties
 
