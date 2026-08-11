@@ -1,37 +1,29 @@
-name: Publish to NPM
+name: Manual library publish
 
 on:
-  push:
-    tags:
-      - "*"
+  workflow_dispatch:
 
 permissions:
-  id-token: write # Required for OIDC
   contents: read
+  id-token: write
 
 jobs:
-  publish:
+  publish-library:
+    environment: npm-publish
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          registry-url: "https://registry.npmjs.org"
-      # Ensure npm 11.5.1 or later is installed
-      - name: Upgrade npm
-        run: npm install -g npm@latest
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
           version: 10.6.5
-
-      - name: Install dependencies and publish package
-        run: |
-          pnpm i
-          pnpm publish --no-git-checks
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - run: corepack pnpm install --frozen-lockfile
+      - run: corepack pnpm ts-check
+      - run: corepack pnpm exec vitest run --reporter=verbose
+      - run: corepack pnpm build
+      - name: Publish only after explicit environment approval
+        run: corepack pnpm publish --no-git-checks

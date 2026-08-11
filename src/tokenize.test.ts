@@ -204,6 +204,70 @@ $$
 ** End Math **`)).toMatchSnapshot()
   })
 
+  it('parses LaTeX parentheses and bracket delimiters', () => {
+    const tokens = _tokenize(`Density is \\(\\rho_1\\) and the values are \\(Q_1 \\approx Q_2\\).
+
+\\[\\rho_1Q_1=\\rho_2Q_2\\]
+
+\\[
+\\boxed{Q_1=Q_2}
+\\]`) as any[]
+    const serialized = JSON.stringify(tokens)
+
+    expect(serialized.match(/"type":"inlineKatex"/g)).toHaveLength(2)
+    expect(serialized.match(/"type":"blockKatex"/g)).toHaveLength(2)
+    expect(serialized).toContain('\\\\rho_1')
+    expect(serialized).toContain('\\\\approx')
+    expect(serialized).toContain('\\\\boxed')
+  })
+
+  it('recovers display math with accidental heading prefixes', () => {
+    const markdown = Array.from({ length: 6 }, (_, index) => {
+      const heading = '#'.repeat(index + 1)
+      const equation = `\\boxed{\\text{Total Head ${index + 1} = Height + Depth + Speed}}`
+      return index % 2 === 0
+        ? `${heading} \\[\n${equation}\n\\]`
+        : `${heading} \\[${equation}\\]`
+    }).join('\n\n')
+    const serialized = JSON.stringify(_tokenize(markdown))
+
+    expect(serialized.match(/"type":"blockKatex"/g)).toHaveLength(6)
+    expect(serialized).not.toContain('"type":"heading"')
+    expect(serialized).toContain('\\\\boxed{\\\\text{Total Head 1 = Height + Depth + Speed}}')
+  })
+
+  it('does not recover non-math headings or incomplete prefixed delimiters', () => {
+    const serialized = JSON.stringify(_tokenize(`# Real heading
+
+## Explanation before \\[
+
+### \\[
+\\boxed{x}`))
+
+    expect(serialized).not.toContain('blockKatex')
+    expect(serialized.match(/"type":"heading"/g)).toHaveLength(3)
+  })
+
+  it('leaves protected and incomplete LaTeX delimiters literal', () => {
+    const tokens = _tokenize(`Inline code: \`\\(\\rho\\)\`
+
+Escaped: \\\\(\\rho\\\\)
+
+Unmatched: \\(\\rho
+
+\`\`\`text
+\\[\\boxed{x}\\]
+\`\`\`
+
+    \\(indented code\\)`) as any[]
+    const serialized = JSON.stringify(tokens)
+
+    expect(serialized).not.toContain('inlineKatex')
+    expect(serialized).not.toContain('blockKatex')
+    expect(serialized).toContain('\\\\rho')
+    expect(serialized).toContain('\\\\boxed')
+  })
+
 
   // image size: ![Alt text](image.png "600x400") or ![Alt text](image.png "50%x50%")
   it('render image size', async () => {

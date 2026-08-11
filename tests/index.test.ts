@@ -1,11 +1,12 @@
 import { Packer } from 'docx'
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
 import markdownToDocx, { MarkdownDocx, styles } from '../src/entry-node'
 
-const __dirname = new URL('.', import.meta.url).pathname
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 const getFile = (filename: string) => path.resolve(__dirname, filename)
 

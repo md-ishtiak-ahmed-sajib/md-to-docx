@@ -4,20 +4,25 @@ This document demonstrates the LaTeX math equation support in markdown-docx.
 
 ## Inline Math
 
-You can write inline equations like $E=mc^2$ directly in your text. Here are more examples:
+You can write inline equations with either `$...$` or `\(...\)` directly in your text. Here are more examples:
 
 - Einstein's mass-energy equivalence: $E=mc^2$
 - Pythagorean theorem: $a^2 + b^2 = c^2$
 - Quadratic formula: $x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}$
 - Greek letters: $\alpha$, $\beta$, $\gamma$, $\delta$, $\pi$, $\omega$
+- Standard LaTeX delimiters: density is \(\rho\)
 
 ## Block Math
 
-For display equations, use double dollar signs:
+For display equations, use double dollar signs or standalone `\[...\]` delimiters:
 
 $$
 E=mc^2
 $$
+
+\[
+\boxed{Q_1=Q_2}
+\]
 
 ### More Examples
 
@@ -81,4 +86,3 @@ Potential improvements:
 - Support for integrals, summations, products
 - Support for multi-line equations
 - Better handling of nested expressions
-

@@ -34,6 +34,13 @@ node_modules
 
 # build
 dist
+release
+pages-dist
+web/public/legal
+*.pfx
+*.p12
+*.cer
+*.pvk
 
 # Documentation
 docs/superpowers/

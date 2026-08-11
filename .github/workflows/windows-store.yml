@@ -1,0 +1,81 @@
+name: Build Microsoft Store packages
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build-store-packages:
+    name: Windows 11 x64 and Arm64 AppX
+    runs-on: windows-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.6.5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+
+      - name: Install locked dependencies
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: Verify Store identity and versions
+        shell: pwsh
+        run: |
+          corepack pnpm check:store
+          if ('${{ github.ref_type }}' -eq 'tag') {
+            $version = (Get-Content package.json | ConvertFrom-Json).version
+            if ("v$version" -ne '${{ github.ref_name }}') {
+              throw "Tag ${{ github.ref_name }} does not match package version v$version."
+            }
+          }
+
+      - name: Type check
+        run: corepack pnpm ts-check
+
+      - name: Run tests
+        run: corepack pnpm exec vitest run --reporter=verbose
+
+      - name: Build and inspect Store packages
+        run: corepack pnpm build:store
+
+      - name: Build and smoke-test the direct x64 installer
+        run: corepack pnpm --filter md-to-docx-windows run dist:win
+
+      - name: Generate release metadata and checksums
+        shell: pwsh
+        run: |
+          corepack pnpm release:metadata
+          corepack pnpm release:checksums
+          Copy-Item THIRD_PARTY_NOTICES.txt release/metadata/THIRD_PARTY_NOTICES.txt
+
+      - name: Upload private Partner Center artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: md-to-docx-store-${{ github.ref_name }}
+          path: |
+            release/store/MD-to-DOCX-*.appx
+            release/MD-to-DOCX-Setup-*.exe
+            release/SHA256SUMS.txt
+            release/metadata/*
+            STORE_SUBMISSION.md
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Explain signing boundary
+        shell: pwsh
+        run: |
+          Write-Host 'These unsigned AppX files are private Partner Center inputs.'
+          Write-Host 'Microsoft signs packages after successful Store certification.'

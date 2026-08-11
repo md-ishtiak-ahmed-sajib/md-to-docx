@@ -10,6 +10,8 @@ const inlineRule = /^(\${1,2})(?!\$)((?:\\.|[^\\\n])*?(?:\\.|[^\\\n\$]))\1(?=[\s
 const inlineRuleNonStandard = /^(\${1,2})(?!\$)((?:\\.|[^\\\n])*?(?:\\.|[^\\\n\$]))\1/; // Non-standard, even if there are no spaces before and after $ or $$, try to parse
 
 const blockRule = /^(\${1,2})\n((?:\\[^]|[^\\])+?)\n\1(?:\n|$)/;
+const inlineParenthesesRule = /^\\\(((?:\\(?!\))|[^\\\n])+?)\\\)/
+const blockBracketsRule = /^ {0,3}(?:#{1,6}[ \t]+)?\\\[[ \t]*(?:\r?\n)?([\s\S]*?)(?:\r?\n)?[ \t]*\\\][ \t]*(?:\r?\n|$)/
 
 /**
  * @see https://github.com/UziTech/marked-katex-extension/blob/main/src/index.js
@@ -25,27 +27,25 @@ export default function latex(lexer: Lexer): IExtension {
   return {
     name: 'latex',
     startInline: (src) => {
-      let index;
-      let indexSrc = src;
+      const dollarIndex = findDollarStart(src, ruleReg, nonStandard)
+      const parenthesesIndex = findParenthesesStart(src)
 
-      while (indexSrc) {
-        index = indexSrc.indexOf('$');
-        if (index === -1) {
-          return;
-        }
-        const f = nonStandard ? index > -1 : index === 0 || indexSrc.charAt(index - 1) !== '$';
-        if (f) {
-          const possibleKatex = indexSrc.substring(index);
-
-          if (possibleKatex.match(ruleReg)) {
-            return index;
-          }
-        }
-
-        indexSrc = indexSrc.substring(index + 1).replace(/^\$+/, '');
-      }
+      if (dollarIndex === undefined) return parenthesesIndex
+      if (parenthesesIndex === undefined) return dollarIndex
+      return dollarIndex < parenthesesIndex ? dollarIndex : parenthesesIndex
     },
     inline: (src, tokens) => {
+      const parenthesesMatch = src.match(inlineParenthesesRule)
+      if (parenthesesMatch) {
+        const inlineKatex: InlineKatex = {
+          type: 'inlineKatex',
+          raw: parenthesesMatch[0],
+          text: parenthesesMatch[1].trim(),
+          displayMode: false,
+        }
+        return inlineKatex
+      }
+
       const match = src.match(ruleReg);
       if (!match) {
         return
@@ -59,6 +59,17 @@ export default function latex(lexer: Lexer): IExtension {
       return inlineKatex
     },
     block: (src, tokens) => {
+      const bracketsMatch = src.match(blockBracketsRule)
+      if (bracketsMatch) {
+        const blockKatex: BlockKatex = {
+          type: 'blockKatex',
+          raw: bracketsMatch[0],
+          text: bracketsMatch[1].trim(),
+          displayMode: true,
+        }
+        return blockKatex
+      }
+
       const match = src.match(blockRule);
       if (!match) {
         return
@@ -75,6 +86,38 @@ export default function latex(lexer: Lexer): IExtension {
       render.addInlineRender('inlineKatex', renderInline)
       render.addBlockRender('blockKatex', renderBlock)
     }
+  }
+}
+
+function findDollarStart(src: string, rule: RegExp, nonStandard: boolean): number | undefined {
+  let searchFrom = 0
+
+  while (searchFrom < src.length) {
+    const index = src.indexOf('$', searchFrom)
+    if (index === -1) return
+
+    const isCandidate = nonStandard || index === 0 || src.charAt(index - 1) !== '$'
+    if (isCandidate && rule.test(src.substring(index))) return index
+
+    searchFrom = index + 1
+    while (src.charAt(searchFrom) === '$') searchFrom++
+  }
+}
+
+function findParenthesesStart(src: string): number | undefined {
+  let searchFrom = 0
+
+  while (searchFrom < src.length) {
+    const index = src.indexOf('\\(', searchFrom)
+    if (index === -1) return
+
+    let precedingBackslashes = 0
+    for (let position = index - 1; position >= 0 && src.charAt(position) === '\\'; position--) {
+      precedingBackslashes++
+    }
+
+    if (precedingBackslashes % 2 === 0 && inlineParenthesesRule.test(src.substring(index))) return index
+    searchFrom = index + 2
   }
 }
 

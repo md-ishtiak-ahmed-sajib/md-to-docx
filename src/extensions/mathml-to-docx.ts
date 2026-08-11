@@ -27,6 +27,20 @@ class MathMatrix extends XmlComponent {
   }
 }
 
+class MathBorderBoxElement extends XmlComponent {
+  constructor(children: MathComponent[]) {
+    super('m:e')
+    for (const child of children) this.root.push(child as any)
+  }
+}
+
+class MathBorderBox extends XmlComponent {
+  constructor(children: MathComponent[]) {
+    super('m:borderBox')
+    this.root.push(new MathBorderBoxElement(children))
+  }
+}
+
 // Convert KaTeX MathML string to docx Math children
 // Minimal mapper covering core elements; can be expanded over time.
 export function mathmlToDocxChildren(mathml: string, opts?: { libreOfficeCompat?: boolean }): MathComponent[] {
@@ -140,6 +154,11 @@ function walkNode(node: any): MathComponent[] {
       const [body, degree] = firstN(kids, 2)
       return [new MathRadical({ children: walkNode(body), degree: walkNode(degree) })]
     }
+    case 'menclose': {
+      const children = walkChildren(kids)
+      const notation = String(node[':@']?.notation || '')
+      return notation.split(/\s+/).includes('box') ? [new MathBorderBox(children)] : children
+    }
     case 'mtable': {
       const rows = kids.filter((k) => tagName(k) === 'mtr')
       if (LO_COMPAT) {
@@ -219,4 +238,3 @@ function findFirst(nodes: any[], name: string): any | null {
 function firstN(nodes: any[], n: number): any[] {
   return nodes.slice(0, n)
 }
-

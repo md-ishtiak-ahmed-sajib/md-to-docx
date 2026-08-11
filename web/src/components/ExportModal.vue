@@ -19,8 +19,8 @@
         >
           <div>
             <h3 class="text-lg leading-6 font-medium text-gray-900 flex items-center" id="modal-title">
-              <span>{{ t('modal_options') }}</span>
-              <span class="text-sm text-gray-500"> (MarkdownDocx v1.0)</span>
+              <span>Export Options</span>
+              <span class="text-sm text-gray-500"> (MD to DOCX v{{ appVersion }})</span>
               <button
                 class="ml-auto text-gray-400 hover:text-gray-500 focus:outline-none cursor-pointer"
                 @click="$emit('update:modelValue', false)"
@@ -34,60 +34,60 @@
             <div class="mt-3 text-center sm:mt-5">
               <form class="mt-2">
                 <div class="mb-4">
-                  <label for="doc-theme" class="block text-sm font-medium text-gray-700 text-left">{{ t('theme') }}</label>
+                  <label for="doc-theme" class="block text-sm font-medium text-gray-700 text-left">Theme</label>
                   <select
-                    v-model="formData.theme"
+                    v-model="selectedTheme"
                     id="doc-theme"
                     class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   >
-                    <option value="default">{{ t('theme_default') }}</option>
-                    <option value="elegant">{{ t('theme_elegant') }}</option>
-                    <option value="academic">{{ t('theme_academic') }}</option>
-                    <option value="modern">{{ t('theme_modern') }}</option>
+                    <option value="default">Default</option>
+                    <option value="elegant">Elegant</option>
+                    <option value="academic">Academic</option>
+                    <option value="modern">Modern</option>
                   </select>
                 </div>
 
                 <div class="mb-4">
-                  <label for="doc-name" class="block text-sm font-medium text-gray-700 text-left">{{ t('filename') }}</label>
+                  <label for="doc-name" class="block text-sm font-medium text-gray-700 text-left">Filename</label>
                   <input
                     v-model="formData.name"
                     type="text"
                     id="doc-name"
                     class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    :placeholder="t('document_name')"
+                    placeholder="Document Name"
                   />
                 </div>
 
                 <div class="mb-4">
-                  <label for="doc-title" class="block text-sm font-medium text-gray-700 text-left">{{ t('title') }}</label>
+                  <label for="doc-title" class="block text-sm font-medium text-gray-700 text-left">Title</label>
                   <input
                     v-model="formData.title"
                     type="text"
                     id="doc-title"
                     class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    :placeholder="t('document_title')"
+                    placeholder="Document Title"
                   />
                 </div>
 
                 <div class="mb-4">
-                  <label for="doc-description" class="block text-sm font-medium text-gray-700 text-left">{{ t('description') }}</label>
+                  <label for="doc-description" class="block text-sm font-medium text-gray-700 text-left">Description</label>
                   <textarea
                     v-model="formData.description"
                     id="doc-description"
                     rows="2"
                     class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    :placeholder="t('document_description')"
+                    placeholder="Document Description"
                   ></textarea>
                 </div>
 
                 <div class="mb-4">
-                  <label for="doc-margin" class="block text-sm font-medium text-gray-700 text-left">{{ t('margin') }}</label>
+                  <label for="doc-margin" class="block text-sm font-medium text-gray-700 text-left">Page Margin</label>
                   <input
                     v-model="formData.margin"
                     type="text"
                     id="doc-margin"
                     class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    :placeholder="t('margin_placeholder')"
+                    placeholder="e.g. 2cm or 2cm 1.5cm"
                   />
                 </div>
 
@@ -102,7 +102,7 @@
                       />
                     </div>
                     <div class="ml-3 text-sm">
-                      <label for="ignore-image" class="font-medium text-gray-700">{{ t('ignore_images') }}</label>
+                      <label for="ignore-image" class="font-medium text-gray-700">Ignore Images</label>
                     </div>
                   </div>
 
@@ -116,7 +116,7 @@
                       />
                     </div>
                     <div class="ml-3 text-sm">
-                      <label for="ignore-footnote" class="font-medium text-gray-700">{{ t('ignore_footnotes') }}</label>
+                      <label for="ignore-footnote" class="font-medium text-gray-700">Ignore Footnotes</label>
                     </div>
                   </div>
 
@@ -130,7 +130,7 @@
                       />
                     </div>
                     <div class="ml-3 text-sm">
-                      <label for="ignore-html" class="font-medium text-gray-700">{{ t('ignore_html') }}</label>
+                      <label for="ignore-html" class="font-medium text-gray-700">Ignore HTML</label>
                     </div>
                   </div>
                 </div>
@@ -143,7 +143,7 @@
               @click="handleExport"
               class="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm"
             >
-              {{ t('export_to_docx') }}
+              Export to DOCX
             </button>
           </div>
         </div>
@@ -153,8 +153,10 @@
 </template>
 
 <script setup>
-import { reactive } from 'vue'
-import { useI18n } from '../composables/useI18n'
+import { computed, reactive } from 'vue'
+import { useTheme } from '../composables/useTheme'
+
+const appVersion = __APP_VERSION__
 
 const props = defineProps({
   modelValue: {
@@ -165,10 +167,14 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'export'])
 
-const { t } = useI18n()
+const { theme, setTheme } = useTheme()
+
+const selectedTheme = computed({
+  get: () => theme.value,
+  set: (value) => setTheme(value)
+})
 
 const formData = reactive({
-  theme: 'default',
   name: '',
   title: '',
   description: '',
@@ -179,7 +185,7 @@ const formData = reactive({
 })
 
 const handleExport = () => {
-  emit('export', { ...formData })
+  emit('export', { ...formData, theme: theme.value })
   emit('update:modelValue', false)
 }
 </script>

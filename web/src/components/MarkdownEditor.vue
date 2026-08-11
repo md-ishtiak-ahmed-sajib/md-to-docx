@@ -4,7 +4,7 @@
       <textarea
         v-model="markdownContent"
         class="w-full h-full p-4 resize-none"
-        :placeholder="t('markdown_placeholder')"
+        placeholder="Enter your Markdown here..."
       ></textarea>
     </div>
     <div class="absolute top-4 right-4 z-10">
@@ -23,7 +23,6 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useI18n } from '../composables/useI18n'
 
 const props = defineProps({
   modelValue: {
@@ -33,8 +32,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:modelValue', 'clear'])
-
-const { t } = useI18n()
 
 const markdownContent = computed({
   get: () => props.modelValue,

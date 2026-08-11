@@ -1,16 +1,21 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-/* 主题相关的CSS变量和样式 */
+/* Theme variables and defaults. */
 #markdown-preview {
-  --theme-primary: #4472C4;
   --theme-heading1: #2F5597;
   --theme-heading2: #5B9BD5;
+  --theme-heading3: #44546A;
+  --theme-heading4: #44546A;
+  --theme-heading5: #44546A;
+  --theme-heading6: #44546A;
   --theme-link: #0563C1;
   --theme-code: #C7254E;
+  --theme-blockquote: #666666;
+  --theme-del: #FF0000;
 }
 
-/* 为预览区域应用主题样式 */
+/* Apply the active theme to the preview. */
 #markdown-preview h1 {
   color: var(--theme-heading1) !important;
 }
@@ -19,11 +24,20 @@
   color: var(--theme-heading2) !important;
 }
 
-#markdown-preview h3,
-#markdown-preview h4,
-#markdown-preview h5,
+#markdown-preview h3 {
+  color: var(--theme-heading3) !important;
+}
+
+#markdown-preview h4 {
+  color: var(--theme-heading4) !important;
+}
+
+#markdown-preview h5 {
+  color: var(--theme-heading5) !important;
+}
+
 #markdown-preview h6 {
-  color: var(--theme-primary) !important;
+  color: var(--theme-heading6) !important;
 }
 
 #markdown-preview a {
@@ -35,15 +49,20 @@
 }
 
 #markdown-preview pre {
-  border-left: 4px solid var(--theme-primary) !important;
+  border-left: 4px solid var(--theme-code) !important;
 }
 
 #markdown-preview blockquote {
-  border-left: 4px solid var(--theme-primary) !important;
-  background-color: rgba(68, 114, 196, 0.05) !important;
+  color: var(--theme-blockquote) !important;
+  border-left: 4px solid var(--theme-blockquote) !important;
+  background-color: color-mix(in srgb, var(--theme-blockquote) 8%, transparent) !important;
 }
 
-/* 主题下拉菜单增强样式 */
+#markdown-preview del {
+  color: var(--theme-del) !important;
+}
+
+/* Theme dropdown styling. */
 .theme-option:hover {
   background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 100%);
 }
@@ -64,7 +83,7 @@
   background: linear-gradient(90deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
 }
 
-/* 在主题按钮中添加小色块指示器 */
+/* Show the active theme color in the header button. */
 #theme-toggle::before {
   content: '';
   display: inline-block;
@@ -75,7 +94,7 @@
   margin-right: 4px;
 }
 
-/* 主题切换动画效果 */
+/* Animate live-preview theme changes. */
 #markdown-preview {
   transition: all 0.3s ease;
 }

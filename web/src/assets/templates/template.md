@@ -1,8 +1,8 @@
-# Markdown to DOCX Converter
+# MD to DOCX
 
 ---
 
-Welcome to the Markdown to DOCX converter! This tool allows you to:
+Welcome to MD to DOCX! This app allows you to:
 
 1. Write or paste Markdown content
 2. Preview the rendered Markdown
@@ -71,38 +71,32 @@ const doc = await markdownDocx(markdown);
 const buffer = await Packer.toBuffer(doc);
 ```
 
-## Inline HTML
-
-<dl>
-  <dt>Definition list</dt>
-  <dd>Is something people use sometimes.</dd>
-
-  <dt>Markdown in HTML</dt>
-  <dd>Does *not* work **very** well. Use HTML <em>tags</em>.</dd>
-</dl>
-
-
 ## Math Equations
 
 ## Inline Math
 
-You can write inline equations like $E=mc^2$ directly in your text. Here are more examples:
+You can write inline equations with either `$...$` or `\(...\)` directly in your text. Here are more examples:
 
 - Einstein's mass-energy equivalence: $E=mc^2$
 - Pythagorean theorem: $a^2 + b^2 = c^2$
 - Quadratic formula: $x = \frac{-b \pm \sqrt{b^2-4ac}}{2a}$
 - Greek letters: $\alpha$, $\beta$, $\gamma$, $\delta$, $\pi$, $\omega$
+- Standard LaTeX delimiters: density is \(\rho\)
 - Formula before closing parenthesis: ($a^2 + b^2 = c^2$)
 - Formula before semicolon: $x_1$; $x_2$; $x_3$
 - Formula before en-dash range: $a \approx 1$–200 nm
 
 ## Block Math
 
-For display equations, use double dollar signs:
+For display equations, use `$$...$$` or standalone `\[...\]` delimiters:
 
 $$
 i\hbar\frac{\partial}{\partial t}\Psi(\mathbf{r},t) = -\frac{\hbar^2}{2m}\nabla^2\Psi(\mathbf{r},t) + V(\mathbf{r})\Psi(\mathbf{r},t)
 $$
+
+\[
+\boxed{Q_1=Q_2}
+\]
 
 ### More Examples
 

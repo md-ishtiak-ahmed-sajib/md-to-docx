@@ -63,8 +63,16 @@ const themeConfigs = {
   }
 }
 
-// 全局主题状态
-const currentTheme = ref(localStorage.getItem('markdown-docx-theme') || 'default')
+const storageKey = 'markdown-docx-theme'
+const storedTheme = localStorage.getItem(storageKey)
+const initialTheme = storedTheme && themeConfigs[storedTheme] ? storedTheme : 'default'
+
+// One global selection drives the preview and DOCX export.
+const currentTheme = ref(initialTheme)
+
+if (storedTheme && storedTheme !== initialTheme) {
+  localStorage.setItem(storageKey, initialTheme)
+}
 
 export function useTheme() {
   const theme = computed(() => currentTheme.value)
@@ -73,7 +81,7 @@ export function useTheme() {
   const setTheme = (themeName) => {
     if (themeConfigs[themeName]) {
       currentTheme.value = themeName
-      localStorage.setItem('markdown-docx-theme', themeName)
+      localStorage.setItem(storageKey, themeName)
     }
   }
 

@@ -1,5 +1,3 @@
-export * from 'docx'
-
 abstract class BaseNode {
   abstract type: string
 

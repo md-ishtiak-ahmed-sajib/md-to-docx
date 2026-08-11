@@ -4,7 +4,24 @@
   "description": "Convert Markdown file to DOCX format",
   "scripts": {
     "dev": "tsdown --watch",
+    "prepare:legal": "node scripts/generate-third-party-notices.mjs && node scripts/prepare-legal-assets.mjs",
+    "dev:web": "corepack pnpm run prepare:legal && corepack pnpm run build && corepack pnpm --parallel --filter markdown-docx --filter web run dev",
     "build": "tsdown",
+    "build:web": "corepack pnpm run prepare:legal && corepack pnpm run build && corepack pnpm --filter web run build",
+    "check:versions": "node desktop/scripts/check-versions.mjs",
+    "check:store": "node desktop/scripts/check-store-config.mjs",
+    "release:metadata": "node scripts/generate-sbom.mjs",
+    "release:checksums": "node scripts/generate-checksums.mjs",
+    "build:installer:win": "corepack pnpm run check:versions && corepack pnpm run build:web && corepack pnpm --filter md-to-docx-windows run dist:win",
+    "build:store:x64": "corepack pnpm run check:store && corepack pnpm run build:web && corepack pnpm --filter md-to-docx-windows run dist:store:x64",
+    "build:store:arm64": "corepack pnpm run check:store && corepack pnpm run build:web && corepack pnpm --filter md-to-docx-windows run dist:store:arm64",
+    "build:store": "corepack pnpm run check:store && corepack pnpm run build:web && corepack pnpm --filter md-to-docx-windows run dist:store",
+    "store:inspect": "node desktop/scripts/smoke-store.mjs x64 arm64",
+    "store:sign:test": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File desktop/scripts/test-sign-store.ps1",
+    "store:install:test": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File desktop/scripts/test-sign-store.ps1 -Install",
+    "store:certify": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File desktop/scripts/run-wack.ps1",
+    "store:remove:test": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File desktop/scripts/remove-test-store.ps1",
+    "build:pages": "corepack pnpm run prepare:legal && node scripts/build-pages.mjs",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
     "prepublishOnly": "pnpm run build",
@@ -16,7 +33,7 @@
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "browser": "dist/index.mjs",
-  "homepage": "https://github.com/vace/markdown-docx",
+  "homepage": "https://github.com/md-ishtiak-ahmed-sajib/md-to-docx",
   "exports": {
     ".": {
       "import": {
@@ -55,14 +72,24 @@
     "email": "ocdo@qq.com",
     "url": "https://github.com/vace"
   },
+  "contributors": [
+    {
+      "name": "Md Ishtiak Ahmed Sajib",
+      "url": "https://github.com/md-ishtiak-ahmed-sajib"
+    }
+  ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/vace/markdown-docx.git"
+    "url": "https://github.com/md-ishtiak-ahmed-sajib/md-to-docx.git"
+  },
+  "bugs": {
+    "url": "https://github.com/md-ishtiak-ahmed-sajib/md-to-docx/issues"
   },
   "license": "MIT",
   "packageManager": "pnpm@10.6.5",
   "devDependencies": {
     "@types/node": "^22.14.0",
+    "jszip": "^3.10.1",
     "tsdown": "^0.15.1",
     "typescript": "^5.8.3",
     "vitest": "^3.1.1"

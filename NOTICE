@@ -1,0 +1,20 @@
+MD to DOCX
+==========
+
+Original markdown-docx library and related upstream work:
+Copyright (c) 2025 Vace
+https://github.com/vace/markdown-docx
+
+Modifications, web application compatibility features, Windows desktop and
+Microsoft Store packaging, and maintained-fork documentation:
+Copyright (c) 2026 Md Ishtiak Ahmed Sajib
+https://github.com/md-ishtiak-ahmed-sajib/md-to-docx
+
+This project is derived from markdown-docx and is distributed under the MIT
+License contained in LICENSE. The original copyright and permission notice are
+preserved. Third-party dependency notices are provided in
+THIRD_PARTY_NOTICES.txt.
+
+Microsoft, Windows, Microsoft Store, Word, and DOCX are trademarks of the
+Microsoft group of companies. This project is not affiliated with or endorsed
+by Microsoft.

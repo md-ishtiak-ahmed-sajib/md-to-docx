@@ -1,9 +1,9 @@
 <template>
   <header class="flex justify-between items-center p-4 bg-white shadow w-full z-10 mb-1">
     <div class="flex items-center space-x-4">
-      <a class="flex items-center" target="_blank" href="https://github.com/vace/markdown-docx">
-        <img src="/icon.svg" alt="MarkdownDocx Logo" class="h-8 w-8 mr-4" />
-        <div class="text-xl font-bold text-indigo-600">MarkdownDocx</div>
+      <a class="flex items-center" target="_blank" rel="noopener noreferrer" href="https://github.com/md-ishtiak-ahmed-sajib/md-to-docx">
+        <img src="/icon.svg" alt="MD to DOCX logo" class="h-8 w-8 mr-4" />
+        <div class="text-xl font-bold text-indigo-600">MD to DOCX</div>
       </a>
       <div class="hidden sm:flex space-x-2">
         <button
@@ -18,10 +18,30 @@
     </div>
 
     <div class="flex items-center space-x-4">
+      <button
+        id="syntax-help-toggle"
+        class="px-3 py-1 text-sm rounded bg-gray-200 hover:bg-gray-100 cursor-pointer"
+        @click="$emit('syntax-help')"
+      >
+        Syntax Help
+      </button>
+
+      <button
+        id="about-toggle"
+        class="px-3 py-1 text-sm rounded bg-gray-200 hover:bg-gray-100 cursor-pointer"
+        @click="$emit('about')"
+      >
+        About
+      </button>
+
       <!-- Theme Selector -->
       <div class="relative" ref="themeDropdownRef">
         <button
+          id="theme-toggle"
           @click="showThemeDropdown = !showThemeDropdown"
+          :aria-expanded="showThemeDropdown"
+          aria-haspopup="menu"
+          :style="{ '--theme-primary': `#${themeConfig.theme.heading1}` }"
           class="px-3 py-1 text-sm rounded bg-gray-200 hover:bg-gray-100 cursor-pointer flex items-center"
         >
           <svg class="h-3.5 w-3.5 mr-1" width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -35,7 +55,7 @@
               d="M24 28C30.6274 28 36 22.6274 36 16C36 9.37258 30.6274 4 24 4C17.3726 4 12 9.37258 12 16C12 22.6274 17.3726 28 24 28Z"
               fill="none" stroke="#000000" stroke-width="4" stroke-linejoin="round" />
           </svg>
-          <span>{{ t('theme') }}</span>
+          <span>Theme: {{ themeConfig.name }}</span>
         </button>
         <div
           v-show="showThemeDropdown"
@@ -45,22 +65,18 @@
             <button
               v-for="themeName in getAllThemes()"
               :key="themeName"
-              class="theme-option block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
+              class="theme-option flex w-full items-center justify-between px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
+              :class="{ 'bg-indigo-50 font-semibold': theme === themeName }"
               :data-theme="themeName"
+              :aria-pressed="theme === themeName"
               @click="handleThemeSelect(themeName)"
             >
-              {{ t(`theme_${themeName}`) }}
+              <span>{{ getThemeConfig(themeName).name }}</span>
+              <span v-if="theme === themeName" aria-hidden="true">✓</span>
             </button>
           </div>
         </div>
       </div>
-
-      <button
-        @click="toggleLocale"
-        class="px-3 py-1 text-sm rounded bg-gray-200 hover:bg-gray-100 cursor-pointer"
-      >
-        {{ locale === 'zh' ? '中' : 'EN' }}
-      </button>
 
       <label
         for="upload"
@@ -77,7 +93,7 @@
             <path d="M23.9917 32V6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
           </g>
         </svg>
-        <span>{{ t('upload') }}</span>
+        <span>Upload</span>
         <input id="upload" type="file" accept=".md, .markdown, .txt" class="hidden" @change="handleFileUpload" />
       </label>
 
@@ -88,12 +104,13 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
           <path d="M12 16l4-5h-3v-6h-2v6h-3l4 5zm-8 2v2h16v-2h-16z" />
         </svg>
-        <span>{{ t('download') }}</span>
+        <span>Download Docx</span>
       </button>
 
       <a
-        href="https://github.com/vace/markdown-docx"
+        href="https://github.com/md-ishtiak-ahmed-sajib/md-to-docx"
         target="_blank"
+        rel="noopener noreferrer"
         class="text-gray-700 hover:text-gray-700 flex items-center bg-gray-200 hover:bg-gray-100 rounded px-3 py-1"
       >
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -109,34 +126,26 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useI18n } from '../composables/useI18n'
 import { useTheme } from '../composables/useTheme'
 import initMarkdown from '../assets/templates/template.md?raw'
-import initZhMarkdown from '../assets/templates/zh-template.md?raw'
 
-const emit = defineEmits(['upload', 'download', 'select-template'])
+const emit = defineEmits(['upload', 'download', 'select-template', 'syntax-help', 'about'])
 
-const { t, locale, toggleLocale } = useI18n()
-const { setTheme, getAllThemes } = useTheme()
+const { theme, themeConfig, setTheme, getThemeConfig, getAllThemes } = useTheme()
 
 const showThemeDropdown = ref(false)
 const themeDropdownRef = ref(null)
 
 const templates = [
   {
-    id: -1,
+    id: 'default',
     name: 'Default',
     template: initMarkdown,
   },
   {
-    id: 1,
+    id: 'meeting-notes',
     name: 'Template 1',
-    template: initZhMarkdown,
-  },
-  {
-    id: 2,
-    name: 'Template 2',
-    template: `# Template 2: Meeting Notes
+    template: `# Template 1: Meeting Notes
 
 ## Meeting Information
 - **Date**: April 16, 2025
@@ -168,9 +177,9 @@ const templates = [
 `
   },
   {
-    id: 3,
-    name: 'Template 3',
-    template: `# Template 3: Project Documentation
+    id: 'project-documentation',
+    name: 'Template 2',
+    template: `# Template 2: Project Documentation
 
 ## Overview
 This document provides comprehensive documentation for the Project X.

@@ -2,7 +2,10 @@ import { beforeAll, describe, expect, it, vi } from 'vitest'
 
 import markdownToDocx, { MarkdownDocx } from './entry-node'
 
-vi.mock('docx')
+vi.mock('docx', async (importOriginal) => ({
+  ...await importOriginal<typeof import('docx')>(),
+  ...await import('../__mocks__/docx'),
+}))
 
 async function renderTest (markdown: string) {
   const docx = new MarkdownDocx(markdown)
@@ -216,6 +219,34 @@ This document tests basic LaTeX math rendering.`)).toMatchSnapshot()
 $$
 E=mc^2
 $$`)).toMatchSnapshot()
+  })
+
+  it('renders LaTeX parentheses and bracket delimiters', async () => {
+    const rendered = await renderTest(`Density is \\(\\rho_1\\) and flow is \\(Q_1 \\approx Q_2\\).
+
+\\[\\rho_1Q_1=\\rho_2Q_2\\]
+
+\\[
+\\boxed{Q_1=Q_2}
+\\]`)
+
+    expect(rendered).toContain('<Math>')
+    expect(rendered).toContain('<MathSubScript ')
+    expect(rendered).toContain('≈')
+    expect(rendered).not.toContain('\\rho')
+    expect(rendered).not.toContain('\\boxed')
+    expect(rendered).not.toContain('\\[')
+  })
+
+  it('renders accidentally heading-prefixed display math as a math block', async () => {
+    const rendered = await renderTest(`# \\[
+\\boxed{\\text{Total Head = Height + Depth + Speed}}
+\\]`)
+
+    expect(rendered).toContain('<Paragraph><Math>')
+    expect(rendered).not.toContain('MdHeading1')
+    expect(rendered).not.toContain('\\boxed')
+    expect(rendered).not.toContain('\\[')
   })
 
   // list number restart

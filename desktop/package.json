@@ -1,0 +1,94 @@
+{
+  "name": "md-to-docx-windows",
+  "version": "1.7.0",
+  "private": true,
+  "description": "Local-first Markdown to Word desktop application for Windows 11",
+  "author": {
+    "name": "Md Ishtiak Ahmed Sajib",
+    "url": "https://github.com/md-ishtiak-ahmed-sajib"
+  },
+  "homepage": "https://md-ishtiak-ahmed-sajib.github.io/md-to-docx/",
+  "license": "MIT",
+  "main": "src/main.cjs",
+  "scripts": {
+    "assets:appx": "node scripts/generate-appx-assets.cjs",
+    "dist:win": "node scripts/generate-appx-assets.cjs && electron-builder --win nsis --x64 --publish never && node scripts/smoke-installer.mjs",
+    "dist:store:x64": "node scripts/generate-appx-assets.cjs && electron-builder --win appx --x64 --publish never --config.directories.output=../release/store && node scripts/smoke-store.mjs x64",
+    "dist:store:arm64": "node scripts/generate-appx-assets.cjs && electron-builder --win appx --arm64 --publish never --config.directories.output=../release/store && node scripts/smoke-store.mjs arm64",
+    "dist:store": "node scripts/generate-appx-assets.cjs && electron-builder --win appx --x64 --arm64 --publish never --config.directories.output=../release/store && node scripts/smoke-store.mjs x64 arm64"
+  },
+  "devDependencies": {
+    "electron": "43.3.0",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "Sajib-Civil-Engineer-BD.md-to-docx.MDToDOCX",
+    "productName": "MD to DOCX",
+    "executableName": "MD-to-DOCX",
+    "copyright": "Copyright © 2026 Md Ishtiak Ahmed Sajib. Based on markdown-docx © 2025 Vace; MIT licensed.",
+    "asar": true,
+    "directories": {
+      "output": "../release",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/main.cjs",
+      "src/server.cjs",
+      "src/window-policy.cjs",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../web/dist",
+        "to": "web",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "../web/public/icon.svg",
+      "artifactName": "MD-to-DOCX-Setup-${version}-${arch}.${ext}",
+      "forceCodeSigning": false
+    },
+    "appx": {
+      "applicationId": "MDToDOCX",
+      "identityName": "Sajib-Civil-Engineer-BD.md-to-docx",
+      "publisher": "CN=5F94008D-1A8C-4CB5-AB4F-7470ED48FD13",
+      "publisherDisplayName": "Sajib-Civil-Engineer-BD",
+      "displayName": "MD to DOCX",
+      "artifactName": "MD-to-DOCX-${version}-${arch}.${ext}",
+      "backgroundColor": "#4F46E5",
+      "languages": [
+        "en-US"
+      ],
+      "capabilities": [
+        "runFullTrust"
+      ],
+      "addAutoLaunchExtension": false,
+      "showNameOnTiles": false,
+      "setBuildNumber": false,
+      "minVersion": "10.0.22000.0",
+      "maxVersionTested": "10.0.26100.0"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": true,
+      "allowElevation": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "MD to DOCX",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false,
+      "include": "build/installer.nsh"
+    }
+  }
+}

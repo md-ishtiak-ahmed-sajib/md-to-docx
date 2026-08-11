@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import JSZip from 'jszip'
 import markdownToDocx, { Packer } from '../src/entry-node'
 
-const __dirname = new URL('.', import.meta.url).pathname
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 describe('Math Rendering', () => {
   it('render comprehensive math example', async () => {
@@ -32,6 +34,41 @@ describe('Math Rendering', () => {
     // check file exists
     const stat = await fs.stat(outputPath);
     expect(stat.isFile()).toBe(true);
+  })
+
+  it('writes native Word math for standard LaTeX delimiters and boxed equations', async () => {
+    const markdown = `Density is \\(\\rho_1\\) and flow is \\(Q_1 \\approx Q_2\\).
+
+\\[
+\\rho_1Q_1=\\rho_2Q_2
+\\]
+
+\\[\\boxed{Q_1=Q_2}\\]`
+    const doc = await markdownToDocx(markdown)
+    const buffer = await Packer.toBuffer(doc)
+    const zip = await JSZip.loadAsync(buffer)
+    const documentXml = await zip.file('word/document.xml')?.async('string')
+
+    expect(documentXml).toBeDefined()
+    expect(documentXml).toContain('<m:oMath>')
+    expect(documentXml).toContain('<m:borderBox>')
+    expect(documentXml).not.toMatch(/\\(?:rho|approx|boxed)|\\\[|\\\]/)
+  })
+
+  it('writes heading-prefixed display math as native Word math without heading styling', async () => {
+    const markdown = `# \\[
+\\boxed{\\text{Total Head = Height + Depth + Speed}}
+\\]`
+    const doc = await markdownToDocx(markdown)
+    const buffer = await Packer.toBuffer(doc)
+    const zip = await JSZip.loadAsync(buffer)
+    const documentXml = await zip.file('word/document.xml')?.async('string')
+
+    expect(documentXml).toBeDefined()
+    expect(documentXml).toContain('<m:oMath>')
+    expect(documentXml).toContain('<m:borderBox>')
+    expect(documentXml).not.toContain('w:val="MdHeading1"')
+    expect(documentXml).not.toMatch(/\\(?:text|boxed)|\\\[|\\\]/)
   })
 })
 

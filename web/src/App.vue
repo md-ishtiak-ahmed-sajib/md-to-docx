@@ -4,13 +4,26 @@
       @upload="handleUpload"
       @download="showExportModal = true"
       @select-template="handleSelectTemplate"
+      @syntax-help="showCompatibilityModal = true"
+      @about="showAboutModal = true"
     />
 
-    <!-- Bilingual notice -->
+    <!-- Local processing notice -->
     <div class="text-center py-2 bg-green-50 text-sm">
       <p>
-        <span class="text-green-600 font-medium">🔒 {{ t('local_processing') }}</span>
+        <span class="text-green-600 font-medium">🔒 Nothing is uploaded, all processing happens locally.</span>
       </p>
+    </div>
+
+    <div
+      v-if="compatibilityDiagnostics.length > 0"
+      id="compatibility-banner"
+      class="flex items-center justify-center gap-3 px-4 py-2 text-center text-sm"
+      :class="hasRemainingCompatibilitySyntax ? 'bg-amber-50 text-amber-800' : 'bg-blue-50 text-blue-700'"
+      role="status"
+    >
+      <span>{{ compatibilityBannerText }}</span>
+      <button class="font-semibold underline" @click="showCompatibilityModal = true">View details</button>
     </div>
 
     <!-- Main content - split view -->
@@ -26,29 +39,67 @@
       v-model="showExportModal"
       @export="handleExport"
     />
+    <CompatibilityModal
+      v-model="showCompatibilityModal"
+      :diagnostics="compatibilityDiagnostics"
+    />
+    <AboutModal v-model="showAboutModal" />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import AppHeader from './components/AppHeader.vue'
 import MarkdownEditor from './components/MarkdownEditor.vue'
 import MarkdownPreview from './components/MarkdownPreview.vue'
 import ExportModal from './components/ExportModal.vue'
+import CompatibilityModal from './components/CompatibilityModal.vue'
+import AboutModal from './components/AboutModal.vue'
 import { useMarkdown } from './composables/useMarkdown'
 import { useTheme } from './composables/useTheme'
-import { useI18n } from './composables/useI18n'
 import markdownDocx, { Packer } from 'markdown-docx'
 import initMarkdown from './assets/templates/template.md?raw'
 
-const { markdownContent, htmlContent, setMarkdown, clearMarkdown } = useMarkdown()
+const {
+  markdownContent,
+  renderMarkdown,
+  compatibilityDiagnostics,
+  compatibilitySummary,
+  htmlContent,
+  setMarkdown,
+  clearMarkdown,
+} = useMarkdown()
 const { getThemeConfig } = useTheme()
-const { t } = useI18n()
-
 const showExportModal = ref(false)
+const showCompatibilityModal = ref(false)
+const showAboutModal = ref(false)
+const remainingDiagnostics = computed(() => compatibilityDiagnostics.value.filter((diagnostic) => (
+  diagnostic.severity === 'warning'
+  || ['compatibility', 'dialect', 'fallback', 'malformed'].includes(diagnostic.category)
+)))
+const hasRemainingCompatibilitySyntax = computed(() => remainingDiagnostics.value.length > 0)
+const compatibilityBannerText = computed(() => {
+  const summary = compatibilitySummary.value
+  const parts = []
+
+  if (summary.citationsRemoved) {
+    parts.push(`${summary.citationsRemoved} private AI ${summary.citationsRemoved === 1 ? 'citation' : 'citations'} removed`)
+  }
+  if (summary.chartsConverted) {
+    parts.push(`${summary.chartsConverted} embedded AI ${summary.chartsConverted === 1 ? 'chart' : 'charts'} converted to ${summary.chartsConverted === 1 ? 'a table' : 'tables'}`)
+  }
+  if (summary.unknownEnvelopesReplaced) {
+    parts.push(`${summary.unknownEnvelopesReplaced} unsupported ${summary.unknownEnvelopesReplaced === 1 ? 'embed' : 'embeds'} replaced`)
+  }
+
+  const remainingCount = remainingDiagnostics.value.length
+  if (remainingCount) parts.push(`${remainingCount} compatibility ${remainingCount === 1 ? 'notice' : 'notices'}`)
+
+  return `${parts.join('; ')}. Editor source is unchanged.`
+})
 
 onMounted(() => {
-  // 初始化默认内容
+  // Initialize the default content.
   setMarkdown(initMarkdown)
 })
 
@@ -78,10 +129,8 @@ const handleExport = async (options) => {
     },
   }
 
-  console.log('Export options:', exportOptions)
-
   try {
-    const buffer = await markdownDocx(markdownContent.value, exportOptions)
+    const buffer = await markdownDocx(renderMarkdown.value, exportOptions)
     const blob = await Packer.toBlob(buffer)
 
     const url = URL.createObjectURL(blob)

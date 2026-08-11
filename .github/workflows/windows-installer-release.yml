@@ -1,0 +1,149 @@
+name: Build and sign Windows installer
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  build-sign-release:
+    name: Windows x64 installer
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout tagged source
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.6.5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+
+      - name: Install locked dependencies
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: Verify tag and package versions
+        shell: pwsh
+        run: |
+          corepack pnpm run check:versions
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          if ("v$version" -ne "${{ github.ref_name }}") {
+            throw "Tag ${{ github.ref_name }} does not match package version v$version."
+          }
+
+      - name: Type check
+        run: corepack pnpm ts-check
+
+      - name: Run all tests
+        run: corepack pnpm exec vitest run --reporter=verbose
+
+      - name: Build and smoke-test unsigned installer
+        run: corepack pnpm build:installer:win
+
+      - name: Upload unsigned installer for origin verification
+        id: upload-unsigned-installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: md-to-docx-windows-unsigned
+          path: release/MD-to-DOCX-Setup-*-x64.exe
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Submit SignPath signing request
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ secrets.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ secrets.SIGNPATH_SIGNING_POLICY_SLUG }}
+          artifact-configuration-slug: ${{ secrets.SIGNPATH_ARTIFACT_CONFIGURATION_SLUG }}
+          github-artifact-id: ${{ steps.upload-unsigned-installer.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: release/signed
+
+      - name: Verify signed installer and create checksum
+        id: verify-signed-installer
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem -Path release/signed -Recurse -Filter 'MD-to-DOCX-Setup-*-x64.exe' | Select-Object -First 1
+          if (-not $installer) {
+            throw 'SignPath did not return the expected installer.'
+          }
+
+          function Assert-SignPathSignature {
+            param([Parameter(Mandatory)][string]$Path)
+
+            $signature = Get-AuthenticodeSignature -LiteralPath $Path
+            if ($signature.Status -ne 'Valid') {
+              throw "Invalid Authenticode signature for ${Path}: $($signature.StatusMessage)"
+            }
+            if ($signature.SignerCertificate.Subject -notmatch 'SignPath Foundation') {
+              throw "Unexpected signer for ${Path}: $($signature.SignerCertificate.Subject)"
+            }
+            if (-not $signature.TimeStamperCertificate) {
+              throw "The Authenticode signature is not timestamped: ${Path}"
+            }
+          }
+
+          Assert-SignPathSignature -Path $installer.FullName
+
+          $expectedVersion = (Get-Content package.json | ConvertFrom-Json).version
+          if ($installer.VersionInfo.ProductVersion -ne $expectedVersion) {
+            throw "Signed installer version $($installer.VersionInfo.ProductVersion) does not match $expectedVersion."
+          }
+
+          $extractedDir = Join-Path $env:RUNNER_TEMP 'markdown-docx-signed-installer'
+          New-Item -ItemType Directory -Path $extractedDir -Force | Out-Null
+          7z x $installer.FullName "-o$extractedDir" 'MD-to-DOCX.exe' -y | Out-Null
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Could not extract the packaged MarkdownDocx.exe for signature verification.'
+          }
+
+          $appExecutable = Get-Item -LiteralPath (Join-Path $extractedDir 'MD-to-DOCX.exe')
+          Assert-SignPathSignature -Path $appExecutable.FullName
+          if ($appExecutable.VersionInfo.ProductVersion -ne "$expectedVersion.0") {
+            throw "Packaged app version $($appExecutable.VersionInfo.ProductVersion) does not match $expectedVersion.0."
+          }
+
+          $checksumPath = "$($installer.FullName).sha256"
+          $hash = (Get-FileHash -LiteralPath $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $($installer.Name)" | Set-Content -LiteralPath $checksumPath -Encoding ascii
+
+          "installer_path=$($installer.FullName)" >> $env:GITHUB_OUTPUT
+          "checksum_path=$checksumPath" >> $env:GITHUB_OUTPUT
+
+      - name: Upload verified signed artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: md-to-docx-windows-signed
+          path: |
+            ${{ steps.verify-signed-installer.outputs.installer_path }}
+            ${{ steps.verify-signed-installer.outputs.checksum_path }}
+          if-no-files-found: error
+
+      - name: Publish GitHub release assets
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = '${{ github.ref_name }}'
+          $installer = '${{ steps.verify-signed-installer.outputs.installer_path }}'
+          $checksum = '${{ steps.verify-signed-installer.outputs.checksum_path }}'
+
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag $installer $checksum --clobber
+          } else {
+            gh release create $tag $installer $checksum --verify-tag --generate-notes --title "MD to DOCX $tag"
+          }
