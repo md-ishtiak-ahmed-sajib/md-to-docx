@@ -92,7 +92,7 @@
     "jszip": "^3.10.1",
     "tsdown": "^0.15.1",
     "typescript": "^5.8.3",
-    "vitest": "^3.2.7"
+    "vitest": "^4.1.11"
   },
   "dependencies": {
     "commander": "^13.1.0",
