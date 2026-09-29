@@ -18,7 +18,7 @@
     "dist:store": "node scripts/generate-appx-assets.cjs && electron-builder --win appx --x64 --arm64 --publish never --config.directories.output=../release/store && node scripts/smoke-store.mjs x64 arm64"
   },
   "devDependencies": {
-    "electron": "43.3.0",
+    "electron": "43.5.0",
     "electron-builder": "26.15.3"
   },
   "build": {
